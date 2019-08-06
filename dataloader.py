@@ -652,7 +652,8 @@ class DataWriter:
                             cv2.imshow("AlphaPose Demo", img)
                             cv2.waitKey(30)
                         if opt.save_img:
-                            cv2.imwrite(os.path.join(opt.outputpath, 'vis', im_name), img)
+                            fn = os.path.join(opt.outputpath, 'vis', os.path.basename(im_name))  # CountChu 2019/8/6. Fixed Windows path error.
+                            cv2.imwrite(fn, img)
                         if opt.save_video:
                             self.stream.write(img)
                 else:
@@ -677,7 +678,8 @@ class DataWriter:
                             cv2.imshow("AlphaPose Demo", img)
                             cv2.waitKey(30)
                         if opt.save_img:
-                            cv2.imwrite(os.path.join(opt.outputpath, 'vis', im_name), img)
+                            fn = os.path.join(opt.outputpath, 'vis', os.path.basename(im_name))  # Count 5/31. Fixed Windows path error.
+                            cv2.imwrite(fn, img)
                         if opt.save_video:
                             self.stream.write(img)
             else:

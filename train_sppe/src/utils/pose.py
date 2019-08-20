@@ -73,7 +73,7 @@ def generateSampleBox(img_path, bndbox, part, nJoints, imgset, scale_factor, dat
     # Counting Joints number
     jointNum = 0
     if imgset == 'coco':
-        for i in range(17):
+        for i in range(nJoints_coco): # DengYang
             if part[i][0] > 0 and part[i][0] > upLeft[0] and part[i][1] > upLeft[1] \
                and part[i][0] < bottomRight[0] and part[i][1] < bottomRight[1]:
                 jointNum += 1

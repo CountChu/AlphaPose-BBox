@@ -5,13 +5,16 @@
 
 import torch
 import torch.utils.data
+
 from utils.dataset import coco
+from utils.dataset_custom import upper_body_coco # DengYang. Use our dataset.
+
 from opt import opt
 from tqdm import tqdm
 from models.FastPose import createModel
 from utils.eval import DataLogger, accuracy
 from utils.img import flip, shuffleLR
-from evaluation import prediction
+# from evaluation import prediction
 
 from tensorboardX import SummaryWriter
 import os
@@ -112,7 +115,20 @@ def main():
     m = createModel().cuda()
     if opt.loadModel:
         print('Loading Model from {}'.format(opt.loadModel))
-        m.load_state_dict(torch.load(opt.loadModel))
+        #m.load_state_dict(torch.load(opt.loadModel))
+        
+		#
+		# add by DengYang, filter last layer because the default dim of conv_out is 17 but our expected dim of upper body is 7.
+		# If the default dim is different from the expected dim, remove the last layer.
+		# Else keep the last layer is better decision. If remove the last layer in the case, we cannot expect the result. 
+        #
+		
+		pretrained_model  = torch.load(opt.loadModel)
+        pretrained_update = {k:v for k, v in pretrained_model.items() if 'conv_out' not in k}
+        model_dict = m.state_dict()
+        model_dict.update(pretrained_update)
+        m.load_state_dict(model_dict)
+		
         if not os.path.exists("../exp/{}/{}".format(opt.dataset, opt.expID)):
             try:
                 os.mkdir("../exp/{}/{}".format(opt.dataset, opt.expID))
@@ -123,10 +139,10 @@ def main():
         print('Create new model')
         if not os.path.exists("../exp/{}/{}".format(opt.dataset, opt.expID)):
             try:
-                os.mkdir("../exp/{}/{}".format(opt.dataset, opt.expID))
+                os.makedirs("../exp/{}/{}".format(opt.dataset, opt.expID)) # DengYang. creates all the intermediate directories
             except FileNotFoundError:
-                os.mkdir("../exp/{}".format(opt.dataset))
-                os.mkdir("../exp/{}/{}".format(opt.dataset, opt.expID))
+                os.makedirs("../exp/{}".format(opt.dataset)) # DengYang. creates all the intermediate directories
+                os.makedirs("../exp/{}/{}".format(opt.dataset, opt.expID)) # DengYang. creates all the intermediate directories
 
     criterion = torch.nn.MSELoss().cuda()
 
@@ -150,6 +166,10 @@ def main():
     if opt.dataset == 'coco':
         train_dataset = coco.Mscoco(train=True)
         val_dataset = coco.Mscoco(train=False)
+    elif opt.dataset == 'upper_boddy':
+        train_dataset = dataset_custom.UpperBodyCoco(train=True)
+        val_dataset = dataset_custom.UpperBodyCoco(train=False)
+    
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=opt.trainBatch, shuffle=True, num_workers=opt.nThreads, pin_memory=True)
